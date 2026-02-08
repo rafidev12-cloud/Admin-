@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pink Life Dashboard</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+:root{
+  --pink:#ff7eb9;
+  --pink-soft:#ffe4f1;
+  --bg:#fff5fa;
+  --white:#ffffff;
+  --dark:#333;
+  --shadow:0 12px 30px rgba(255,126,185,.25);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:var(--bg); min-height:100vh; display:flex; flex-direction:column;}
+h1,h2,h3{margin-bottom:10px; color:var(--dark);}
+small{color:#666;}
+
+#loading{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg); z-index:100;
+}
+#loading h1{color:var(--pink); animation:pulse 1.2s infinite;}
+
+#login{
+  display:none; min-height:100vh; align-items:center; justify-content:center;
+}
+.login-box{
+  background:var(--white); padding:30px; border-radius:20px; box-shadow:var(--shadow); width:85%; max-width:320px; text-align:center;
+}
+.login-box h2{color:var(--pink); margin-bottom:20px;}
+.login-box input{width:100%; padding:14px; border:none; border-radius:14px; background:#f5f5f5; margin-bottom:15px;}
+.login-box button{width:100%; padding:14px; border:none; border-radius:14px; background:var(--pink); color:white; font-size:16px; cursor:pointer; font-weight:600;}
+
+#app{display:none; flex-grow:1; padding:15px; max-width:480px; margin:auto; display:flex; flex-direction:column;}
+.card{background:var(--white); border-radius:20px; box-shadow:var(--shadow); padding:20px; margin-bottom:15px; animation:fade 0.4s ease;}
+.balance{text-align:center;}
+.balance p{font-size:30px; font-weight:700; color:var(--pink);}
+.summary{display:flex; gap:10px;}
+.box{flex:1; background:var(--pink-soft); border-radius:14px; padding:12px; text-align:center;}
+
+input,select,textarea,button{width:100%; padding:12px; border:none; border-radius:14px; margin-bottom:12px;}
+button{background:var(--pink); color:white; font-weight:600; cursor:pointer;}
+
+.list{max-height:250px; overflow:auto;}
+.item{background:#fff; border-radius:14px; padding:12px; margin-bottom:10px;}
+.item small{opacity:.6;}
+.income{color:green;}
+.expense{color:red;}
+.delete{float:right; background:none; border:none; color:red; font-size:18px; cursor:pointer;}
+
+canvas{width:100%; height:180px;}
+
+.tabs{
+  display:flex; gap:8px; margin-bottom:15px; justify-content:space-between;
+}
+.tab{
+  flex:1; padding:12px; border-radius:14px; background:#fff; text-align:center; font-weight:600; box-shadow:var(--shadow); opacity:.6; cursor:pointer;
+}
+.tab.active{background:var(--pink); color:white; opacity:1;}
+
+.nav-bottom{
+  position:fixed; bottom:0; left:0; width:100%; display:flex; background:#fff; box-shadow:0 -4px 15px rgba(0,0,0,.1);
+}
+.nav-bottom button{
+  flex:1; padding:14px; border:none; background:none; cursor:pointer; font-weight:600; color:#666;
+}
+.nav-bottom button.active{color:var(--pink);}
+.hidden{display:none;}
+
+@keyframes pulse{
+  0%{opacity:.4} 50%{opacity:1} 100%{opacity:.4}
+}
+@keyframes fade{
+  from{opacity:0; transform:translateY(15px);} to{opacity:1; transform:translateY(0);}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading"><h1>Pink Life Dashboard</h1></div>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-box">
+    <h2>Login</h2>
+    <input id="username" placeholder="Nama pengguna">
+    <button onclick="doLogin()">Masuk</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <h1>💖 Pink Life Dashboard</h1>
+
+  <!-- TAB MENU -->
+  <div class="tabs">
+    <div class="tab active" onclick="openTab(0)">Admin</div>
+    <div class="tab" onclick="openTab(1)">Forex</div>
+    <div class="tab" onclick="openTab(2)">Workout</div>
+    <div class="tab" onclick="openTab(3)">Makan</div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="section">
+    <div class="card balance">
+      <p id="saldo">Rp 0</p>
+      <small>Saldo saat ini</small>
+    </div>
+    <div class="card summary">
+      <div class="box">
+        <b id="income">Rp 0</b><br><small>Pendapatan</small>
+      </div>
+      <div class="box">
+        <b id="expense">Rp 0</b><br><small>Pengeluaran</small>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Tambah Transaksi</h3>
+      <select id="type">
+        <option value="income">Pendapatan</option>
+        <option value="expense">Pengeluaran</option>
+      </select>
+      <input id="amount" type="number" placeholder="Nominal" required>
+      <input id="note" placeholder="Catatan">
+      <button onclick="addTx()">Simpan</button>
+    </div>
+    <div class="card">
+      <h3>Riwayat Transaksi</h3>
+      <div class="list" id="list"></div>
+    </div>
+  </div>
+
+  <!-- FOREX -->
+  <div class="section hidden">
+    <div class="card">
+      <h3>Forex Guide</h3>
+      <div class="item"><b>Cara Kerja Forex</b><br>Market bergerak karena likuiditas & institusi besar.</div>
+      <div class="item"><b>SNR & SND</b><br>Support = beli, Resistance = jual.</div>
+      <div class="item"><b>Flow Timeframe</b><br>H1 arah → M15 konfirmasi → M1 entry.</div>
+      <div class="item"><b>Aturan Disiplin</b><br>SL wajib, max 2 entry/hari, stop loss = stop trading.</div>
+      <div class="item"><b>Tips & Psikologi</b><br>Disiplin & sabar = profit jangka panjang.</div>
+    </div>
+  </div>
+
+  <!-- WORKOUT -->
+  <div class="section hidden">
+    <div class="card">
+      <h3>Workout Ectomorph</h3>
+      <div class="item">Senin: Push<br>Bench 4×10, Shoulder 3×12<br><small>Teknik: kontrol gerakan, tarik nafas saat turun</small></div>
+      <div class="item">Selasa: Pull<br>Pull up 4×8, Row 3×10<br><small>Teknik: punggung rapat, jangan ayun</small></div>
+      <div class="item">Rabu: Legs<br>Squat 4×10, Leg curl 3×12</div>
+      <div class="item">Kamis: Upper Mix</div>
+      <div class="item">Jumat: Full Body</div>
+      <div class="item">Sabtu & Minggu: REST</div>
+    </div>
+  </div>
+
+  <!-- MAKAN -->
+  <div class="section hidden">
+    <div class="card">
+      <h3>Pola Makan Ectomorph</h3>
+      <div class="item">Pagi: Nasi 200g + Telur 2<br><small>Protein & karbo seimbang</small></div>
+      <div class="item">Siang: Nasi 250g + Ayam / Ikan<br><small>Konsumsi protein hewani</small></div>
+      <div class="item">Malam: Nasi 200g + Tempe / Tahu<br><small>Protein nabati & serat</small></div>
+      <div class="item">Snack: Susu / Pisang / Kacang<br><small>Energi tambahan</small></div>
+      <div class="item">Air: 2–3 Liter / hari<br><small>Hidrasi optimal</small></div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV BAWAH -->
+<div class="nav-bottom">
+  <button class="active" onclick="openTab(0,this)">Admin</button>
+  <button onclick="openTab(1,this)">Forex</button>
+  <button onclick="openTab(2,this)">Workout</button>
+  <button onclick="openTab(3,this)">Makan</button>
+</div>
+
+<script>
+/* ===== LOADING & LOGIN ===== */
+setTimeout(()=>{
+  document.getElementById("loading").style.display="none";
+  if(localStorage.getItem("user")) startApp();
+  else document.getElementById("login").style.display="flex";
+},1500);
+
+function doLogin(){
+  const name=document.getElementById("username").value.trim();
+  if(!name) return alert("Isi nama pengguna!");
+  localStorage.setItem("user",name);
+  startApp();
+}
+
+function startApp(){
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="flex";
+}
+
+/* ===== APP LOGIC ===== */
+let txs=JSON.parse(localStorage.getItem("txs")||"[]");
+
+function rupiah(n){return "Rp "+n.toLocaleString("id-ID");}
+
+function render(){
+  let inc=0,exp=0;
+  const list=document.getElementById("list");
+  list.innerHTML="";
+  txs.forEach((t,i)=>{
+    if(t.type==="income") inc+=t.amount;
+    else exp+=t.amount;
+    const div=document.createElement("div");
+    div.className="item "+t.type;
+    div.innerHTML=`${t.note||"-"}<br>${rupiah(t.amount)}<br><small>${t.time}</small>
+    <button class="delete" onclick="del(${i})">×</button>`;
+    list.appendChild(div);
+  });
+  document.getElementById("income").innerText=rupiah(inc);
+  document.getElementById("expense").innerText=rupiah(exp);
+  document.getElementById("saldo").innerText=rupiah(inc-exp);
+  localStorage.setItem("txs",JSON.stringify(txs));
+}
+
+function addTx(){
+  const amt=+document.getElementById("amount").value;
+  if(!amt || amt<=0) return alert("Masukkan nominal!");
+  txs.unshift({
+    type:document.getElementById("type").value,
+    amount:amt,
+    note:document.getElementById("note").value,
+    time:new Date().toLocaleString("id-ID")
+  });
+  document.getElementById("amount").value="";
+  document.getElementById("note").value="";
+  render();
+}
+
+function del(i){txs.splice(i,1); render();}
+
+function openTab(idx,btn){
+  document.querySelectorAll(".section").forEach((s,i)=>s.classList.toggle("hidden",i!==idx));
+  document.querySelectorAll(".nav-bottom button").forEach((b,i)=>b.classList.toggle("active",i===idx));
+}
+
+render();
+</script>
+
+</body>
+  </html>
